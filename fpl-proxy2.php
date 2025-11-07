@@ -1,6 +1,6 @@
 <?php
 // =====================================================
-// FPL PHP Proxy – Berghweb.no stable version
+// FPL PHP Proxy – for berghweb.no same-folder setup
 // =====================================================
 
 // 1. Content-type
@@ -48,19 +48,16 @@ $ch = curl_init($fplApi);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0");
 curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+curl_setopt($ch, CURLOPT_MAXREDIRS, 0);
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch); // hent feilmelding før close
-curl_close($ch);
 
-// 6. Sjekk respons
 if ($response === false) {
     echo json_encode([
         "error" => "Curl failed",
-        "curl_error" => $curlError,
+        "curl_error" => curl_error($ch),
         "http_code" => $httpCode
     ]);
     exit;
@@ -74,10 +71,9 @@ if (empty(trim($response))) {
     exit;
 }
 
-// 7. Lagre i cache og returner
+curl_close($ch);
+
+// 6. Lagre i cache og returner
 file_put_contents($cacheFile, $response);
 header('X-Cache: MISS');
 echo $response;
-
-// 8. (valgfritt) logg til fil for debugging
-@file_put_contents(sys_get_temp_dir() . '/fpl_debug.log', date('c') . " - " . $endpoint . " - HTTP $httpCode\n", FILE_APPEND);
